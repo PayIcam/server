@@ -1,26 +1,14 @@
-#!/usr/bin/env php
 <?php
-// Include all dependencies
-require_once 'vendor/autoload.php';
 
-// Load config
-require_once 'config.inc.php';
-\Payutc\Config::initFromArray($_CONFIG);
+$base_path = "D:/Gregoire/ICAM/PayIcam/Backups/";
+$filename = 'database_backup_'.date('Y_m_d_H_i_s');
+$total_path = $base_path . $filename;
 
-/*
-This file must be called every minutes
-*/
-use \Payutc\Bom\Task;
+$sql_user = 'xxxxx';
+$sql_pass = 'xxxxx';
 
-$start = time();
-$continue = True;
+$data_save_req = 'mysqldump --all-databases' . ' --user=' . $sql_user .' --password=' . $sql_pass  . ' > "'. $total_path . '.sql' . '"';
+$zip_data_req = 'zip ' . $total_path . '.zip ' . $total_path . '.sql';
 
-while($continue) {
-	$action = Task::doOne();
-	if(!$action) {
-		sleep(5);
-	}
-	if((time() - $start) > 55) {
-		$continue = false;
-	}
-}
+exec($data_save_req);
+exec($zip_data_req)
