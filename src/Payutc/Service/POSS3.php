@@ -7,18 +7,18 @@ use \Payutc\Exception\UserNotFound;
 use \Payutc\Bom\User;
 
 class POSS3 extends POSS {
-    
+
     protected function shouldICheckUser() {
         return true;
     }
 
     /**
-     * Obtenir les infos d'un buyer 
+     * Obtenir les infos d'un buyer
      *
      * @param String $badge_id
      * @return array $state
      */
-    public function getBuyerInfo($badge_id) {
+    public function getBuyerInfo($badge_id, $fun_id=null) {
         // Verifier que le buyer existe
         try {
             $buyer = User::getUserFromBadge($badge_id);
@@ -27,9 +27,9 @@ class POSS3 extends POSS {
             Log::warn("getBuyerInfo($badge_id) : User not found");
             throw new PossException("Ce badge n'a pas été reconnu");
         }
-        return parent::getBuyerInfo($buyer);
+        return parent::getBuyerInfo($buyer, $fun_id);
     }
-    
+
     /**
      * Transaction complète,
      *         1. load le buyer

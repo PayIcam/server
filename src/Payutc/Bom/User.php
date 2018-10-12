@@ -491,8 +491,8 @@ class User {
     *
     * @return array $return
     */
-    public function getLastPurchases() {
-        return Purchase::getPurchasesForUser($this->getId(), 60*15);
+    public function getLastPurchases($fun_id=null) {
+        return Purchase::getPurchasesForUser($this->getId(), 60*15, $fun_id);
     }
 
     /**

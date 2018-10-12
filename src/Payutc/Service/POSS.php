@@ -26,7 +26,7 @@ class POSS extends \ServiceBase {
      * @param String $badge_id
      * @return array $state
      */
-    public function getBuyerInfo($buyer) {
+    public function getBuyerInfo($buyer, $fun_id=null) {
         $this->checkRight($this->shouldICheckUser(), true);
 
         // Vérifier que la carte n'est pas bloquée
@@ -43,7 +43,7 @@ class POSS extends \ServiceBase {
             "lastname"=>$buyer->getLastname(),
             "solde"=>$buyer->getCredit(),
             "credit_ecocup"=>$buyer->getCreditEcocup(),
-            "last_purchases"=>$buyer->getLastPurchases()
+            "last_purchases"=>$buyer->getLastPurchases($fun_id),
         );
     }
 

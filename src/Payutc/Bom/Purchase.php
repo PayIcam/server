@@ -2,7 +2,7 @@
 
 /**
  * Purchase
- * 
+ *
  * Functions related to purchase table
  * Table: t_purchase_pur
  */
@@ -17,14 +17,14 @@ use \Payutc\Bom\User;
 class Purchase
 {
     /**
-     * getNbSell() retourne le nombre de vente d'un objet 
+     * getNbSell() retourne le nombre de vente d'un objet
      * (ou des objets de la categorie) // TODO
      * depuis $start jusqu'à $end
-     * 
+     *
      * $tick permet de découper le resultat par tranche (pour afficher une courbe d'évolution)
      * il faut indiquer un nombre de secondes à $tick
      */
-    public static function getNbSell($obj_id, $fun_id, $start=null, $end=null, $tick=null) 
+    public static function getNbSell($obj_id, $fun_id, $start=null, $end=null, $tick=null)
     {
         $qb = Dbal::createQueryBuilder();
         $qb->select('sum(pur_qte) as nb', 'tra.tra_date')
@@ -34,7 +34,7 @@ class Purchase
            ->andWhere('tra.fun_id = :fun_id')->setParameter('fun_id', $fun_id)
            ->andWhere("tra.tra_status = 'V'")
            ->andWhere('pur.pur_removed = 0');
-        
+
         if($start != null) {
             $qb->andWhere('tra.tra_date >= :start')
                ->setParameter('start', $start);
@@ -162,7 +162,7 @@ class Purchase
         while($r = $a->fetch()) { $result[] = $r; }
         return $result;
     }
-    
+
     public static function getPurchaseById($pur_id)
     {
         $qb = Dbal::createQueryBuilder();
@@ -174,7 +174,7 @@ class Purchase
            ->setParameter('pur_id', $pur_id);
         return $qb->execute()->fetch();
     }
-    
+
     public static function cancelById($pur_id)
     {
         // get the purchase
@@ -200,7 +200,7 @@ class Purchase
             throw $e;
         }
     }
-    
+
     /**
      * @param $usr_id id du buyer
      * @param array $itm_ids array des articles à acheter
@@ -209,9 +209,9 @@ class Purchase
     public static function transaction($usr_id_buyer, $items, $app_id, $fun_id, $usr_id_seller, $pur_ip)
     {
         $conn = Dbal::conn();
-        
+
         $conn->beginTransaction();
-        
+
         try {
             // Insert the transaction
             $conn->insert('t_transaction_tra', array(
@@ -224,13 +224,13 @@ class Purchase
                 'tra_ip' => $pur_ip,
             ));
             $transactionId = $conn->lastInsertId();
-            
+
             // Build the purchases (transaction ID is required here)
             $total_price = 0;
             foreach ($items as $itm) {
                 $price = $itm['price'] * $itm['qte'];
                 $total_price += $price;
-                
+
                 Product::decStockById($itm['id'], $itm['qte']);
                 $conn->insert('t_purchase_pur', array(
                     'tra_id' => $transactionId,
@@ -243,7 +243,7 @@ class Purchase
 
             // Remove credit from the user
             User::decCreditById($usr_id_buyer, $total_price);
-            
+
             $conn->commit();
         }
         catch (\Exception $e) {
@@ -284,7 +284,7 @@ class Purchase
             $qb->andWhere('tra.tra_date <= :end')
                ->setParameter('end', $end);
         }
- 
+
         $qb->groupBy('tra.usr_id_buyer');
 
         if($sort_by == "totalPrice") {
@@ -292,7 +292,7 @@ class Purchase
         } else {
             $qb->orderBy('count(*)', 'DESC');
         }
-       
+
         if($top != null) {
             $qb->setFirstResult( 0 )
                ->setMaxResults( $top );
@@ -304,7 +304,7 @@ class Purchase
         return $result;
     }
 
-    public static function getPurchasesForUser($usr_id, $time_limit=null)
+    public static function getPurchasesForUser($usr_id, $time_limit=null, $fun_id=null)
     {
         $qb = Dbal::createQueryBuilder();
         $qb->select('pur_id', 'obj_id', 'pur_price', 'pur_qte', 'tra_date AS pur_date')
@@ -317,6 +317,10 @@ class Purchase
         if ($time_limit) {
             $qb->andWhere('TIME_TO_SEC(TIMEDIFF( NOW( ) , tra_date )) <= :time_limit')
                ->setParameter('time_limit', $time_limit);
+        }
+        if ($fun_id) {
+            $qb->andWhere('tra.fun_id = :fun_id')
+               ->setParameter('fun_id', $fun_id);
         }
         return $qb->execute()->fetchAll();
     }
