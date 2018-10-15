@@ -357,7 +357,7 @@ class ServiceBase {
     public function userAutocomplete($queryString) {
         // Verification sur le droits avant toute choses
         $this->checkRight(false, true, false);
-        $res = $this->db->query("SELECT usr_id, usr_firstname, usr_lastname
+        $res = $this->db->query("SELECT usr_id, usr_firstname, usr_lastname, usr_mail
             FROM ts_user_usr WHERE (UPPER(usr_firstname) LIKE '%s%%' OR UPPER(usr_lastname) LIKE '%s%%')
             ORDER BY usr_lastname ASC LIMIT 10;", array(strtoupper($queryString), strtoupper($queryString)));
         $return = array();
@@ -365,7 +365,8 @@ class ServiceBase {
             while ($don = $this->db->fetchArray($res)) {
                 $return[] = array(
                     "id" => $don['usr_id'],
-                    "name" => $don['usr_firstname']." ".$don['usr_lastname']
+                    "name" => $don['usr_firstname']." ".$don['usr_lastname'],
+                    "mail" => $don['usr_mail']
                 );
             }
         }
