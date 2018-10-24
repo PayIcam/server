@@ -492,6 +492,11 @@ class ServiceBase {
         return $user->getId();
     }
 
+    public function getUserEmail($usr_id) {
+        $this->checkRight();
+        return User::getMailFromId($usr_id);
+    }
+
     protected function &getSession() {
         if (!isset($_SESSION[get_class($this)])) {
             $_SESSION[get_class($this)] = array();

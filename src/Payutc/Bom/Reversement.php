@@ -1,7 +1,7 @@
 <?php
 /**
  * Reversement
- * 
+ *
  * Functions related to reversement table
  * Table: t_reversement_rev
  */
@@ -20,8 +20,8 @@ class Reversement
     public $step; // 'W', 'A', 'V'
     public $created;
     public $updated = null;
-    protected $usrAsk;
-    protected $usrDone = null;
+    public $usrAsk;
+    public $usrDone = null;
     public $amount = null;
     public $taux = null;
     public $frais = null;
@@ -50,9 +50,9 @@ class Reversement
                 'rev_frais' => $this->frais
                 ),
                 array(
-                    "integer", 
+                    "integer",
                     "string",
-                    "datetime", 
+                    "datetime",
                     "datetime",
                     "integer",
                     "integer",
@@ -98,11 +98,11 @@ class Reversement
         if($funId != null) {
             $qb->andWhere('rev.fun_id = :fun_id')->setParameter('fun_id', $funId);
         }
-        
+
         $result = $qb->execute()->fetch();
         return $result['total'];
     }
-    
+
     // Obtenir le montant total non reversé.
     public static function getNotReversed($funId = null) {
         return Purchase::getRevenue($funId) - self::getTotal($funId);
@@ -118,7 +118,7 @@ class Reversement
         if($funId != null) {
             $qb->andWhere('rev.fun_id = :fun_id')->setParameter('fun_id', $funId);
         }
-        
+
         $result = $qb->execute()->fetch();
         return $result['total'];
     }
@@ -155,6 +155,7 @@ class Reversement
             throw new ReversementNotFound("Le reversement n'existe pas");
         }
         $reversement = $ret[0];
+
 
         // Récupérer la date de début des transactions prise en compte par ce reversement
         $qb = self::getQbBase()

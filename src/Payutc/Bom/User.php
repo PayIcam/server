@@ -145,6 +145,25 @@ class User {
         return $this->gingerUser->mail;
     }
 
+    public static function getMailFromId($usr_id) {
+        $query = Dbal::createQueryBuilder()
+            ->select('usr_nickname')
+            ->from('ts_user_usr', 'usr')
+            ->where('usr.usr_id = :usr_id')
+            ->setParameter('usr_id', $usr_id)
+            ->execute();
+
+        // Check that the user exists
+        if ($query->rowCount() != 1) {
+            Log::debug("User: User not found for id $this->idUser");
+            throw new UserNotFound();
+        }
+
+        // Get data from the database
+        $don = $query->fetch();
+        return $don['usr_nickname'];
+    }
+
     /**
     * Retourne $credit.
     * On fait une requête dans la BDD à chaque accès au crédit par sécurité.
