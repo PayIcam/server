@@ -250,6 +250,7 @@ class User {
             'SELECT
                 IFNULL(tra.tra_validated, tra.tra_date) AS date,
                 pur.pur_price AS amount,
+                pur.pur_qte AS quantity,
                 "PURCHASE" AS type,
                 obj.obj_name AS name,
                 fun.fun_name AS fun,
@@ -266,6 +267,7 @@ class User {
             SELECT
                 rec.rec_date AS date,
                 rec.rec_credit AS amount,
+                1 as quantity,
                 "RECHARGE" AS type,
                 NULL AS name,
                 NULL AS fun,
@@ -279,6 +281,7 @@ class User {
             SELECT
                 virin.vir_date AS date,
                 virin.vir_amount AS amount,
+                1 as quantity,
                 "VIRIN" AS type,
                 virin.vir_message AS name,
                 NULL AS fun,
@@ -293,6 +296,7 @@ class User {
             SELECT
                 virout.vir_date AS date,
                 virout.vir_amount AS amount,
+                1 as quantity,
                 "VIROUT" AS type,
                 virout.vir_message AS name,
                 NULL AS fun,

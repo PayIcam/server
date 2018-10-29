@@ -9,16 +9,16 @@ use \Payutc\Log;
 
 /**
  * MYACCOUNT.php
- * 
+ *
  * Ce service permet la gestion du compte d'un utilisateur
  * (Visualisation de l'historique, Blocage/Déblocage de sa carte)
  */
- 
+
 class MYACCOUNT extends \ServiceBase {
-     
+
     /**
 	 * Connecter le user avec un ticket CAS.
-	 * 
+	 *
 	 * @param String $ticket
 	 * @param String $service
 	 * @return bool $success
@@ -57,7 +57,7 @@ class MYACCOUNT extends \ServiceBase {
             Log::error("Impossible de créer le user $login: ".$ex->getMessage());
             throw new PayutcException("Le user n'a pas pu être chargé");
         }
-        
+
         // Save user in session for all service
         $this->setUser($user);
         return $user->getNickname();
@@ -74,21 +74,22 @@ class MYACCOUNT extends \ServiceBase {
         if(!$this->user()) {
             throw new \Payutc\Exception\CheckRightException("Vous devez connecter un utilisateur ! (method loginCas)");
         }
-        
+
         // Verification de rechargement en cours (utile surout quand les notifications ne marchent pas (genre en dev))
         $pl = new \Payutc\Bom\Payline($this->application()->getId(), $this->service_name);
         $pl->checkUser($this->user());
-        
+
         return array(
             "historique" => $this->user()->getHistorique(),
-            "credit" => $this->user()->getCredit());
+            "credit" => $this->user()->getCredit(),
+            "credit_ecocup" => $this->user()->getCreditEcocup());
 	}
 
     /**
     * Recupere le statut de la cotisation de l'utilisateur
     * Utile pour ne pas afficher les modules qui lui sont "bloqués" comme le virement
     * Et pour lui afficher un lien de rappel lui permettant d'aller cotiser directement en ligne.
-    * @return boolean 
+    * @return boolean
     */
     public function isCotisant() {
         return $this->user()->isCotisant();
@@ -106,15 +107,15 @@ class MYACCOUNT extends \ServiceBase {
         if(!$this->user()) {
             throw new \Payutc\Exception\CheckRightException("Vous devez connecter un utilisateur ! (method loginCas)");
         }
-        
+
         $this->user()->setSelfBlock($blocage);
-        
+
         return $this->isBlockedMe();
     }
-    
+
     /**
     * Self-blocked ?
-    * 
+    *
     * @return isBlocked ?
     */
     public function isBlockedMe() {
@@ -124,9 +125,9 @@ class MYACCOUNT extends \ServiceBase {
         if(!$this->user()) {
             throw new \Payutc\Exception\CheckRightException("Vous devez connecter un utilisateur ! (method loginCas)");
         }
-        
+
         return $this->user()->isBlockedMe();
     }
-	
-	
+
+
  }
