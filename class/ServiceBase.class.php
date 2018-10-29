@@ -357,8 +357,9 @@ class ServiceBase {
     public function userAutocomplete($queryString) {
         // Verification sur le droits avant toute choses
         $this->checkRight(false, true, false);
-        $res = $this->db->query("SELECT usr_id, usr_firstname, usr_lastname, usr_mail
-            FROM ts_user_usr WHERE (UPPER(usr_firstname) LIKE '%s%%' OR UPPER(usr_lastname) LIKE '%s%%')
+        $res = $this->db->query("SELECT usr_id, usr_firstname, usr_lastname, usr_mail, ginger.promo promo, ginger.site site
+            FROM ts_user_usr payicam LEFT JOIN payicam_ginger.users ginger ON ginger.login = payicam.usr_mail
+            WHERE (UPPER(usr_firstname) LIKE '%s%%' OR UPPER(usr_lastname) LIKE '%s%%')
             ORDER BY usr_lastname ASC LIMIT 10;", array(strtoupper($queryString), strtoupper($queryString)));
         $return = array();
         if ($this->db->affectedRows() >= 1) {
@@ -366,7 +367,11 @@ class ServiceBase {
                 $return[] = array(
                     "id" => $don['usr_id'],
                     "name" => $don['usr_firstname']." ".$don['usr_lastname'],
-                    "mail" => $don['usr_mail']
+                    "firstname" => $don['usr_firstname'],
+                    "lastname" => $don['usr_lastname'],
+                    "mail" => $don['usr_mail'],
+                    "promo" => $don['promo'],
+                    "site" => $don['site']
                 );
             }
         }
