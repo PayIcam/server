@@ -36,7 +36,7 @@ $_CONFIG['server_url'] = "http://localhost/buckutt/";
 $_CONFIG['wsdl_cache'] = WSDL_CACHE_NONE;
 
 // Montant maximum à autoriser sur un compte (en cts)
-$_CONFIG['credit_max'] = 10000;
+$_CONFIG['credit_max'] = 100000;
 
 // Montant minimum d'un rechargement
 $_CONFIG['rechargement_min'] = 1000;
@@ -107,3 +107,13 @@ $_CONFIG["papercut_mysql"] = [
 	'sql_user' => "root",
 	'sql_pass' => "root"
 ];
+
+$_CONFIG["PHPMailer"] = array(
+        "Host" => "smtp.gmail.com",
+        "SMTPAuth" => true,
+        "Username" => "",
+        "Password" => "",
+        "SMTPSecure" => "ssl",
+        "Port" => 465,
+        "integrity_mail" => ""
+    )
