@@ -498,7 +498,7 @@ class ServiceBase {
     }
 
     public function getUserEmail($usr_id) {
-        $this->checkRight();
+        // $this->checkRight();
         return User::getMailFromId($usr_id);
     }
 
