@@ -18,7 +18,7 @@ exec($zip_data_req);
 
 $db = new PDO('mysql:host='.$_CONFIG['sql_host'].';dbname='.$_CONFIG['sql_db'].';charset=utf8',$_CONFIG['sql_user'],$_CONFIG['sql_pass'],array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION ));
 
-$integrity = $db->query('SELECT  usr.usr_id, IFNULL(pur.pur_price, 0) as pur_price, IFNULL(rec.rec_credit, 0) as rec_credit, IFNULL(virFrom.virFrom_amount, 0) as virFrom_amount, IFNULL(virTo.virTo_amount, 0) as virTo_amount, IFNULL(pur.pur_price, 0)+IFNULL(rec.rec_credit, 0)+IFNULL(virFrom.virFrom_amount, 0)+IFNULL(virTo.virTo_amount, 0) as balance, IFNULL(pur.pur_price, 0)+IFNULL(rec.rec_credit, 0)+IFNULL(virFrom.virFrom_amount, 0)+IFNULL(virTo.virTo_amount, 0) - usr_credit balanceMoinsUserCredit FROM `ts_user_usr` usr
+$integrity = $db->query('SELECT  usr.usr_id, IFNULL(pur.pur_price, 0)+IFNULL(rec.rec_credit, 0)+IFNULL(virFrom.virFrom_amount, 0)+IFNULL(virTo.virTo_amount, 0) - usr_credit balanceMoinsUserCredit FROM `ts_user_usr` usr
  LEFT JOIN (
      SELECT -1*SUM(p.pur_price) AS pur_price, t.usr_id_buyer AS usr_id FROM t_purchase_pur p
          LEFT JOIN t_transaction_tra t ON t.tra_id = p.tra_id
