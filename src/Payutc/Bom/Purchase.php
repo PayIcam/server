@@ -324,4 +324,20 @@ class Purchase
         }
         return $qb->execute()->fetchAll();
     }
+    public static function getPurchasesIdsFromTransaction($tra_id, $obj_id=false)
+    {
+        $qb = Dbal::createQueryBuilder();
+        $qb->select('pur_id')
+           ->from('t_purchase_pur', 'pur')
+           ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
+           ->Where('tra.tra_id = :tra_id')
+           ->andWhere("tra.tra_status = 'V'")
+           ->andWhere('pur_removed = 0')
+           ->setParameter('tra_id', $tra_id);
+        if ($obj_id) {
+            $qb->andWhere('pur.obj_id = :obj_id')
+               ->setParameter('obj_id', $obj_id);
+        }
+        return $qb->execute()->fetchAll();
+    }
 }

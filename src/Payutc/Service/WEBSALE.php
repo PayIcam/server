@@ -4,21 +4,22 @@ namespace Payutc\Service;
 
 use \Payutc\Config;
 use \Payutc\Bom\Transaction;
+use \Payutc\Bom\Purchase;
 use \Payutc\Exception\InvalidData;
 use \Payutc\Exception\PayutcException;
 use \Payutc\Exception\TransactionNotFound;
 
 /**
  * WEBSALE.php
- * 
- * Ce service permet à une application d'effectuer des ventes par internet 
+ *
+ * Ce service permet à une application d'effectuer des ventes par internet
  *
  */
- 
+
 class WEBSALE extends \ServiceBase {
-     
+
 	/**
-	* Crée une transaction 
+	* Crée une transaction
 	* $objs = [[id, qte], ...]
 	* $fun_id = Fundation qui réalise la vente
 	* $mail = mail de l'acheteur
@@ -29,23 +30,23 @@ class WEBSALE extends \ServiceBase {
     public function createTransaction($items, $fun_id, $mail, $return_url, $callback_url=null) {
         // On a une appli qui a les droits ?
         $this->checkRight(false, true, true, $fun_id);
-        
+
         // return_url est obligatoire dans ce service
         if(empty($return_url)){
             throw new InvalidData("return_url cannot be empty");
         }
-        
+
         // Verifions que les parametres sont a peu pres cohérents
         $objects = json_decode($items);
         if(!is_array($objects)) {
             throw new PayutcException("Erreur de parametre");
         }
-                
+
         // Get the service url of application with WEBSALECONFIRM right
         $app = new \Application();
         $app->fromRight("WEBSALECONFIRM");
         $app_url = $app->getUrl();
-        
+
         // Create the transaction, get transaction ID, and token
         $transaction = Transaction::create(
             null, // Buyer
@@ -59,7 +60,7 @@ class WEBSALE extends \ServiceBase {
         $transaction->setEmail($mail);
         $tra_id = $transaction->getId();
         $token_id = $transaction->getToken();
-        
+
 		return array(
 		    "tra_id" => $tra_id,
 		    "url" => $app_url . "validation?tra_id=" . $tra_id . "&token=" . $token_id
@@ -68,7 +69,7 @@ class WEBSALE extends \ServiceBase {
 
     /**
     * Fonction pour recupérer le statut d'une transaction
-    * 
+    *
     * @param int $fun_id (check de la fundation)
     * @param int $tra_id (id de la transaction a checker)
     * @return array
@@ -76,15 +77,15 @@ class WEBSALE extends \ServiceBase {
     public function getTransactionInfo($fun_id, $tra_id) {
         // On a une appli qui a les droits ?
         $this->checkRight(false, true, true, $fun_id);
-        
+
         // Get info on this transaction
         $transaction = Transaction::getById($tra_id);
-        
+
         // Check fun_id is correct
         if($fun_id != $transaction->getFunId()) {
             throw new TransactionNotFound("La transaction $tra_id n'existe pas");
         }
-        
+
         return array(
             "id" => $tra_id,
             "status" => $transaction->getStatus(),
@@ -93,4 +94,30 @@ class WEBSALE extends \ServiceBase {
             "email" => $transaction->getEmail()
         );
     }
+
+    /** Annulation d'un achat
+     * 1. Récupére l'achat
+     * 2. Vérifie que le vendeur est le bon, ainsi que la vente à été réalisé il y'a moins de X temps
+     * 3. Annule la vente et recrédite
+     * @param int $pur_id
+     * @return bool
+     */
+    public function cancel($fun_id, $tra_id, $obj_id) {
+        $this->checkRight(false, true, true, $fun_id);
+
+        // ANNULATION
+        // pur_id, tra_id, obj_id, pur_qte, pur_unit_price, pur_reduction, ...
+        $pur_ids = Purchase::getPurchasesIdsFromTransaction($tra_id, $obj_id);
+        foreach($pur_ids as $pur_id) {
+            $pur = Purchase::getPurchaseById($pur_id['pur_id']);
+            if($pur["pur_removed"] == 1) {
+                Log::warn("cancel($pur_id) : Already cancelled");
+                throw new PossException("Cette vente à déjà été annulé...");
+            }
+            Purchase::cancelById($pur_id['pur_id']);
+        }
+
+        return true;
+    }
+
  }
