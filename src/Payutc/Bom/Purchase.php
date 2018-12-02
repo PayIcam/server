@@ -69,6 +69,31 @@ class Purchase
             return $result['nb'];
         }
     }
+    public static function getNbSells($obj_ids, $fun_id, $start=null, $end=null)
+    {
+        $qb = Dbal::createQueryBuilder();
+        $qb->select('obj_id, sum(pur_qte) as nb')
+           ->from('t_purchase_pur', 'pur')
+           ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
+           ->where('pur.obj_id IN(:obj_ids)')->setParameter('obj_ids', json_decode($obj_ids), \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)
+           ->andWhere('tra.fun_id = :fun_id')->setParameter('fun_id', $fun_id)
+           ->andWhere("tra.tra_status = 'V'")
+           ->andWhere('pur.pur_removed = 0');
+
+        if($start != null) {
+            $qb->andWhere('tra.tra_date >= :start')
+               ->setParameter('start', $start);
+        }
+
+        if($end != null) {
+            $qb->andWhere('tra.tra_date <= :end')
+               ->setParameter('end', $end);
+        }
+
+        $qb->groupBy('pur.obj_id');
+
+        return $qb->execute()->fetchAll();
+    }
 
     /**
      * getRevenue() retourne le montant total des ventes

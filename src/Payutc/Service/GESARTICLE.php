@@ -106,6 +106,11 @@ class GESARTICLE extends \ServiceBase {
         }
     }
 
+    public function setPrice($articles, $fun_id) {
+        $this->checkRight(true, true, true, $fun_id);
+        return Product::setPrice($articles);
+    }
+
     /**
     * Retire un article
     */

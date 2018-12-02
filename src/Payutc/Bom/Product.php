@@ -328,6 +328,23 @@ class Product {
         return array("success"=>"ok");
     }
 
+    public static function setPrice($articles) {
+        foreach(json_decode($articles) as $id => $price) {
+            $qb = Dbal::createQueryBuilder();
+            $qb->update('t_price_pri', 'pri_credit')
+            ->set('pri_credit', ':pri_credit')
+            ->where('obj_id = :obj_id')
+            ->setParameters(array(
+                'obj_id' => $id,
+                'pri_credit' => $price
+            ))
+            ->execute();
+            file_put_contents('debugAntoine5.ptxt', $articles);
+            file_put_contents('debugAntoine6.ptxt', $id);
+            file_put_contents('debugAntoine7.ptxt', $price);
+        }
+    }
+
 
     protected static function _baseUpdateQueryById($itm_id)
     {
