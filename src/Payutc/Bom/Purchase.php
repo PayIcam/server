@@ -95,6 +95,86 @@ class Purchase
         return $qb->execute()->fetchAll();
     }
 
+    public static function getTraderStats($obj_ids, $fun_id, $start=null, $end=null) {
+        function stat_query($select, $obj_ids, $fun_id, $start, $end, $group_by=false, $having=false, $order_by=false, $first=false, $max=false, $usr_join=false) {
+            $qb = Dbal::createQueryBuilder();
+            $qb->select($select)
+               ->from('t_purchase_pur', 'pur')
+               ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
+               ->innerJoin('pur', 't_object_obj', 'obj', 'obj.obj_id=pur.obj_id')
+               ->innerJoin('obj', 't_price_pri', 'pri', 'pri.obj_id=obj.obj_id');
+            if($usr_join) {
+                $qb->innerJoin('tra', 'ts_user_usr', 'usr', 'usr.usr_id = tra.usr_id_buyer');
+            }
+            $qb->where('pur.pur_removed=0')
+               ->andWhere('tra.tra_status ="V"')
+               ->andWhere('obj.fun_id=:fun_id')
+               ->andWhere('obj.obj_service ="Mozart"')
+               ->andWhere('obj.obj_id IN (:obj_ids)');
+            if($start != null) {
+                $qb->andWhere('tra.tra_date > :start');
+                $qb->setParameter('start', $start);
+            } if($end != null) {
+                $qb->andWhere('tra.tra_date < :end');
+                $qb->setParameter('end', $end);
+            } if($group_by != false) {
+                $qb->groupBy($group_by);
+            } if($having != false) {
+                $qb->having($having);
+            } if($order_by != false) {
+                $qb->orderBy($order_by, 'DESC');
+            } if($first != false) {
+                $qb->setFirstResult($first);
+            } if($max != false) {
+                $qb->setMaxResults($max);
+            }
+            $qb->setParameter("fun_id", $fun_id)
+               ->setParameter("obj_ids" , json_decode($obj_ids), \Doctrine\DBAL\Connection::PARAM_INT_ARRAY);
+            return $qb->execute()->fetchAll();
+        }
+
+        $bar_stats = stat_query('ROUND(SUM(pur.pur_price)/100, 2) depenses,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) pertes_du_bar,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage_de_pertes,
+            SUM(pur.pur_qte) nombre_bieres,
+            COUNT(DISTINCT tra.usr_id_buyer) participants',
+            $obj_ids, $fun_id, $start, $end);
+
+        $best_performers = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
+            ROUND(SUM(pur.pur_price)/100, 2) depenses,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
+            $obj_ids, $fun_id, $start, $end, 'usr.usr_id', 'theorie > 5', 'pourcentage', 0, 3, true);
+        $most_gained = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
+            ROUND(SUM(pur.pur_price)/100, 2) depenses,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
+            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'theorie > 5', 'gain', 0, 3, true);
+        $most_payed = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
+            ROUND(SUM(pur.pur_price)/100, 2) depenses,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
+            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'theorie > 5', 'depenses', 0, 3, true);
+
+        $article_stats = stat_query('obj.obj_name,
+            ROUND(SUM(pur.pur_price)/100, 2) depenses,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
+            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) - SUM(pur.pur_price) pertes_du_bar,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage_de_pertes,
+            COUNT(DISTINCT tra.usr_id_buyer) participants,
+            SUM(pur.pur_qte) nombre_bieres,
+            ROUND(SUM(pur.pur_price) / SUM(pur.pur_qte)/100, 2) moyenne_prix,
+            ROUND(MIN(pur.pur_unit_price)/100, 2) min,
+            ROUND(MAX(pur.pur_unit_price)/100, 2) max',
+            $obj_ids, $fun_id, $start, $end, 'pur.obj_id', false, 'nombre_bieres');
+
+        return array('bar_stats' => $bar_stats, 'best_performers' => $best_performers, 'most_gained' => $most_gained, 'most_payed' => $most_payed, 'article_stats' => $article_stats);
+    }
+
     /**
      * getRevenue() retourne le montant total des ventes
      * d'une fondation $fun_id pour l'application $app_id

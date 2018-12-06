@@ -31,6 +31,11 @@ class STATS extends \ServiceBase {
         $this->checkRight(false, true, true, $fun_id);
         return \Payutc\Bom\Purchase::getNbSells($obj_ids, $fun_id, $start, $end);
     }
+    public function getTraderStats($obj_ids, $fun_id, $start=null, $end=null) {
+        // Il suffit de vérifier que l'application à les droits sur la fundation donné
+        $this->checkRight(false, true, true, $fun_id);
+        return \Payutc\Bom\Purchase::getTraderStats($obj_ids, $fun_id, $start, $end);
+    }
 
     /**
      * Retourne le montant des ventes sur une période
