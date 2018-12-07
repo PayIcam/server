@@ -135,7 +135,7 @@ class Purchase
 
         $bar_stats = stat_query('ROUND(SUM(pur.pur_price)/100, 2) depenses,
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
-            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) pertes_du_bar,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/100, 2) pertes_du_bar,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage_de_pertes,
             SUM(pur.pur_qte) nombre_bieres,
             COUNT(DISTINCT tra.usr_id_buyer) participants',
@@ -146,24 +146,24 @@ class Purchase
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
             ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
-            $obj_ids, $fun_id, $start, $end, 'usr.usr_id', 'theorie > 5', 'pourcentage', 0, 3, true);
+            $obj_ids, $fun_id, $start, $end, 'usr.usr_id', 'depenses > 5', 'pourcentage', 0, 3, true);
         $most_gained = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
             ROUND(SUM(pur.pur_price)/100, 2) depenses,
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
             ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
-            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'theorie > 5', 'gain', 0, 3, true);
+            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'depenses > 5', 'gain', 0, 3, true);
         $most_payed = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
             ROUND(SUM(pur.pur_price)/100, 2) depenses,
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
             ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
-            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'theorie > 5', 'depenses', 0, 3, true);
+            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'depenses > 5', 'depenses', 0, 3, true);
 
         $article_stats = stat_query('obj.obj_name,
             ROUND(SUM(pur.pur_price)/100, 2) depenses,
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
-            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) - SUM(pur.pur_price) pertes_du_bar,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/100, 2) pertes_du_bar,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage_de_pertes,
             COUNT(DISTINCT tra.usr_id_buyer) participants,
             SUM(pur.pur_qte) nombre_bieres,
