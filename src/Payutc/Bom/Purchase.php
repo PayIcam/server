@@ -110,6 +110,7 @@ class Purchase
                ->andWhere('tra.tra_status ="V"')
                ->andWhere('obj.fun_id=:fun_id')
                ->andWhere('obj.obj_service ="Mozart"')
+               ->andWhere('obj.obj_name NOT IN ("Eco cup", "Retour eco cup"')
                ->andWhere('obj.obj_id IN (:obj_ids)');
             if($start != null) {
                 $qb->andWhere('tra.tra_date > :start');
@@ -144,21 +145,21 @@ class Purchase
         $best_performers = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
             ROUND(SUM(pur.pur_price)/100, 2) depenses,
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
-            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/100, 2) gain,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
-            $obj_ids, $fun_id, $start, $end, 'usr.usr_id', 'depenses > 5', 'pourcentage', 0, 3, true);
+            $obj_ids, $fun_id, $start, $end, 'usr.usr_id', 'depenses >= 5', 'pourcentage', 0, 3, true);
         $most_gained = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
             ROUND(SUM(pur.pur_price)/100, 2) depenses,
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
-            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/100, 2) gain,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
-            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'depenses > 5', 'gain', 0, 3, true);
+            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'depenses >= 5', 'gain', 0, 3, true);
         $most_payed = stat_query('usr.usr_id, usr.usr_firstname, usr.usr_lastname,
             ROUND(SUM(pur.pur_price)/100, 2) depenses,
             ROUND(SUM(pri.pri_credit*pur.pur_qte)/100, 2) theorie,
-            ROUND(SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price)/100, 2) gain,
+            ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/100, 2) gain,
             ROUND((SUM(pri.pri_credit*pur.pur_qte) - SUM(pur.pur_price))/SUM(pri.pri_credit*pur.pur_qte)*100, 2) pourcentage',
-            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'depenses > 5', 'depenses', 0, 3, true);
+            $obj_ids, $fun_id, $start, $end, 'tra.usr_id_buyer', 'depenses >= 5', 'depenses', 0, 3, true);
 
         $article_stats = stat_query('obj.obj_name,
             ROUND(SUM(pur.pur_price)/100, 2) depenses,
