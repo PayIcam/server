@@ -96,9 +96,14 @@ $_CONFIG["papercut"] = [
 // & d'ajouter le champ usr_credit_ecocup à la table usr: utiliser php db.php migrations:migrate //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 $_CONFIG["ecocup"] = [
+    'fun_id' => 2, // id fun bar icam
+    'buy' => 279,
+    'return' => 280,
+];
+$_CONFIG["ecocup_soiree"] = [
 	'fun_id' => 2, // id fun bar icam
-	'buy' => 279,
-	'return' => 280,
+	'buy' => 1395,
+	'return' => 1396,
 ];
 
 $_CONFIG["papercut_mysql"] = [

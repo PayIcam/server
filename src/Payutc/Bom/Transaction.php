@@ -365,6 +365,8 @@ class Transaction {
             $buyerId = $buyer ? $buyer->getId() : null;
             $sellerId = $seller ? $seller->getId() : null;
 
+            date_default_timezone_set('Europe/Paris');
+
             // Insert the transaction
             $conn->insert('t_transaction_tra', array(
                 'tra_date' => new \DateTime(),
