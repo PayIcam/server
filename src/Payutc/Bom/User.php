@@ -197,11 +197,13 @@ class User {
     *
     * @return int $credit
     */
-    public function getCreditEcocup() {
+    public function getCreditEcocup($type="classique") {
         Log::debug("User($this->idUser): getCreditEcocup()");
 
+        $column = $type == "classique" ? 'usr_credit_ecocup' : 'usr_credit_ecocup_soiree';
+
         $query = Dbal::createQueryBuilder()
-            ->select('usr_credit_ecocup')
+            ->select($column)
             ->from('ts_user_usr', 'usr')
             ->where('usr.usr_id = :usr_id')
             ->setParameter('usr_id', $this->getId())
@@ -213,9 +215,10 @@ class User {
             throw new UserNotFound();
         }
 
+
         // Get data from the database
         $don = $query->fetch();
-        return $don['usr_credit_ecocup'];
+        return $type=="classique" ? $don['usr_credit_ecocup'] : $don['usr_credit_ecocup_soiree'];
     }
 
     /**
@@ -571,35 +574,47 @@ class User {
             ->setParameter('val', $val);
         $qb->execute();
     }
-    public function updateCreditEcocup($val) {
-        static::updateCreditEcocupById($val, $this->getId());
+    public function updateCreditEcocup($val, $type="classique") {
+        static::updateCreditEcocupById($val, $this->getId(), $type);
     }
-    public static function updateCreditEcocupById($val, $usrId) {
+    public static function updateCreditEcocupById($val, $usrId, $type="classique") {
         $qb = Dbal::createQueryBuilder();
         $qb->update('ts_user_usr', 'usr')
             ->where('usr_id = :usr_id')
-            ->setParameter('usr_id', $usrId)
-            ->set('usr_credit_ecocup', ':val')
-            ->setParameter('val', $val);
+            ->setParameter('usr_id', $usrId);
+        if($type == "classique") {
+            $qb->set('usr_credit_ecocup', ':val');
+        } else {
+            $qb->set('usr_credit_ecocup_soiree', ':val');
+        }
+        $qb->setParameter('val', $val);
         $qb->execute();
     }
-    public static function addCreditEcocupById($val, $usrId) {
+    public static function addCreditEcocupById($val, $usrId, $type="classique") {
         $qb = Dbal::createQueryBuilder();
         $qb->update('ts_user_usr', 'usr')
             ->where('usr_id = :usr_id')
-            ->setParameter('usr_id', $usrId)
-            ->set('usr_credit_ecocup', 'usr_credit_ecocup + :val')
-            ->setParameter('val', $val);
+            ->setParameter('usr_id', $usrId);
+        if($type == "classique") {
+            $qb->set('usr_credit_ecocup', 'usr_credit_ecocup + :val');
+        } else {
+            $qb->set('usr_credit_ecocup_soiree', 'usr_credit_ecocup_soiree + :val');
+        }
+        $qb->setParameter('val', $val);
         $qb->execute();
     }
-    public static function getCreditEcocupById($usrId) {
+    public static function getCreditEcocupById($usrId, $type="classique") {
         $qb = Dbal::createQueryBuilder();
-        $q = $qb->select('usr_credit_ecocup')
-                ->from('ts_user_usr', 'usr')
+        if($type=="classique") {
+            $qb->select('usr_credit_ecocup');
+        } else {
+            $qb->select('usr_credit_ecocup_soiree');
+        }
+        $q = $qb->from('ts_user_usr', 'usr')
                 ->where('usr_id = :id')
                 ->setParameter('id', $usrId);
         $res = $q->execute()->fetch();
-        return $res['usr_credit_ecocup']*1;
+        return $type=="classique" ? $res['usr_credit_ecocup']*1 : $res['usr_credit_ecocup_soiree'];
     }
 
     public function incCredit($val) {
