@@ -298,17 +298,14 @@ class Payline {
             } else {
                 // Indique le rechargement comme aborted
                 $conn = Dbal::conn();
-                $conn->update('t_paybox_pay', 
-                                array("pay_step" => 'A', 
+                $conn->update('t_paybox_pay',
+                                array("pay_step" => 'A',
                                       "pay_date_retour" => new \DateTime(),
-                                      "pay_amount" => $response["payment"]["amount"],
-                                      "pay_auto" => $response["authorization"]["number"],
-                                      "pay_trans" => $response["transaction"]["id"],
                                       "pay_error" => $response["result"]["code"]),
-                                array("pay_token" => $token),
-                                array("string", "datetime", "integer", "string", "string", "string"));
+                                array('pay_token' => $token),
+                                array("string", "datetime", "integer", "string"));
                 Log::warning("PAYLINE : error !", array('token' => $token, "response" => $response));
-                
+
                 // annulation de la transaction
                 try {
                     $qb = Dbal::createQueryBuilder();
