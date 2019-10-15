@@ -93,11 +93,11 @@ class POSS extends \ServiceBase {
             User::updateCreditEcocupById(min(4, $userCredit+$pur["pur_qte"]), $pur["usr_id_buyer"]);
         }
 
-        elseif ($pur['obj_id']*1 == $_CONFIG["ecocup_soiree"]['return']*1) {
+        elseif (in_array($pur['obj_id']*1, $_CONFIG["ecocup_soiree"]['return']) {
             // On annule un retour: on retire les ecocup en réserver pour le gars !
             $userCredit = User::getCreditEcocupById($pur["usr_id_buyer"], "soiree");
             User::updateCreditEcocupById($userCredit-$pur["pur_qte"], $pur["usr_id_buyer"], "soiree");
-        } else if ($pur['obj_id']*1 == $_CONFIG["ecocup_soiree"]['buy']*1 && $pur['pur_reduction']*1 == 1) {
+        } else if (in_array($pur['obj_id']*1, $_CONFIG["ecocup_soiree"]['buy']) && $pur['pur_reduction']*1 == 1) {
             // On annule un retrait d'écocups de la réserve, faqu'on les remet en réserve
             $userCredit = User::getCreditEcocupById($pur["usr_id_buyer"], "soiree");
             User::updateCreditEcocupById(min(4, $userCredit+$pur["pur_qte"]), $pur["usr_id_buyer"], "soiree");
