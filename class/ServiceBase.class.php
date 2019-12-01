@@ -106,6 +106,14 @@ class ServiceBase {
         return $user->getNickname();
     }
 
+    public function loginSelfAuth($email, $user_key) {
+        $user = User::getUserFromSelfAuth($email, $user_key);
+
+        $this->setUser($user);
+
+        return $user->getNickname();
+    }
+
     protected function setUser($user) {
         // Save user in session for all service
         $_SESSION['ServiceBase']['user'] = $user;

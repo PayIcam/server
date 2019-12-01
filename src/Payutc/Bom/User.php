@@ -666,6 +666,29 @@ class User {
         return new User($gingerUser->login, $gingerUser);
     }
 
+    public static function getUserFromSelfAuth($mail, $userKey) {
+        Log::debug("User: getUserFromSelfAuth($mail, $userKey)");
+
+        $ginger = self::getNewGinger();
+        try {
+            $gingerUser = $ginger->apiCall("login", ['login' => $login, 'userKey' => $userKey], "POST");
+        }
+        catch (\Exception $ex) {
+            if($ex->getCode() == 404){
+                Log::warn("User: login/ not found in Ginger");
+                throw new UserNotFound();
+            }
+            Log::error("User: Ginger exception ".$ex->getCode().": ".$ex->getMessage());
+            throw new GingerFailure($ex);
+        }
+
+        if(!$gingerUser->login) {
+            throw new UserNotFound();
+        }
+
+        return new User($gingerUser->login, $gingerUser);
+    }
+
     public static function createAndGetNewUser($login) {
         Log::debug("User: createAndGetNewUser($login)");
 
