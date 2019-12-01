@@ -666,8 +666,8 @@ class User {
         return new User($gingerUser->login, $gingerUser);
     }
 
-    public static function getUserFromSelfAuth($mail, $userKey) {
-        Log::debug("User: getUserFromSelfAuth($mail, $userKey)");
+    public static function getUserFromSelfAuth($login, $userKey) {
+        Log::debug("User: getUserFromSelfAuth($login, $userKey)");
 
         $ginger = self::getNewGinger();
         try {

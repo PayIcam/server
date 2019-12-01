@@ -106,8 +106,8 @@ class ServiceBase {
         return $user->getNickname();
     }
 
-    public function loginSelfAuth($email, $user_key) {
-        $user = User::getUserFromSelfAuth($email, $user_key);
+    public function loginSelfAuth($login, $user_key) {
+        $user = User::getUserFromSelfAuth($login, $user_key);
 
         $this->setUser($user);
 
