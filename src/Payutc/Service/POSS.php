@@ -93,11 +93,11 @@ class POSS extends \ServiceBase {
             User::updateCreditEcocupById(min(4, $userCredit+$pur["pur_qte"]), $pur["usr_id_buyer"]);
         }
 
-        elseif ($pur['obj_id']*1 == $_CONFIG["ecocup_soiree"]['return']*1) {
+        elseif (in_array($pur['obj_id']*1, $_CONFIG["ecocup_soiree"]['return'])) {
             // On annule un retour: on retire les ecocup en réserver pour le gars !
             $userCredit = User::getCreditEcocupById($pur["usr_id_buyer"], "soiree");
             User::updateCreditEcocupById($userCredit-$pur["pur_qte"], $pur["usr_id_buyer"], "soiree");
-        } else if ($pur['obj_id']*1 == $_CONFIG["ecocup_soiree"]['buy']*1 && $pur['pur_reduction']*1 == 1) {
+        } else if (in_array($pur['obj_id']*1, $_CONFIG["ecocup_soiree"]['buy']) && $pur['pur_reduction']*1 == 1) {
             // On annule un retrait d'écocups de la réserve, faqu'on les remet en réserve
             $userCredit = User::getCreditEcocupById($pur["usr_id_buyer"], "soiree");
             User::updateCreditEcocupById(min(4, $userCredit+$pur["pur_qte"]), $pur["usr_id_buyer"], "soiree");
@@ -156,6 +156,9 @@ class POSS extends \ServiceBase {
         $ecocup = [ 'buy' => 0, 'return' => 0 ];
         $ecocup_soiree = [ 'buy' => 0, 'return' => 0 ];
 
+        $ecocup_soiree_buy_id = 0;
+        $ecocup_soiree_return_id = 0;
+
         foreach ($objects as $obj) {
             if ($fun_id == $_CONFIG["ecocup"]['fun_id']) {
                 if ($obj[0] == $_CONFIG["ecocup"]['buy'])
@@ -164,11 +167,15 @@ class POSS extends \ServiceBase {
                     $ecocup['return'] += $obj[1];
             } 
 
-            if ($fun_id == $_CONFIG["ecocup_soiree"]['fun_id']) {
-                if ($obj[0] == $_CONFIG["ecocup_soiree"]['buy'])
+            if (in_array($fun_id, $_CONFIG["ecocup_soiree"]['fun_id'])) {
+                if (in_array($obj[0], $_CONFIG["ecocup_soiree"]['buy'])) {
                     $ecocup_soiree['buy'] += $obj[1];
-                else if ($obj[0] == $_CONFIG["ecocup_soiree"]['return'])
+                    $ecocup_soiree_buy_id = $obj[0];
+                }
+                else if (in_array($obj[0], $_CONFIG["ecocup_soiree"]['return'])) {
                     $ecocup_soiree['return'] += $obj[1];
+                    $ecocup_soiree_return_id = $obj[0];
+                }
             }
         }
 
@@ -242,6 +249,8 @@ class POSS extends \ServiceBase {
                 }
             }
 
+            $ecocups_soirees_ids = array_merge($_CONFIG["ecocup_soiree"]['return'], $_CONFIG["ecocup_soiree"]['buy']);
+
             $cur_ecocup_soiree = $buyer->getCreditEcocup("soiree");
             if ($ecocup_soiree['return'] + $cur_ecocup_soiree > 4)
                 throw new PossException("Inutile, tu ne peux pas retourner plus de 4 écocup soirées");
@@ -249,34 +258,34 @@ class POSS extends \ServiceBase {
                 if ($ecocup_soiree['return'] > 0) { // faire la différence dans les écocup achetées & rendues !
                     $ecocup_soiree['return'] -= $ecocup_soiree['buy'];
                     if ($ecocup_soiree['return'] == 0) { // On achete pas d'écocup rien !
-                        $objects = removeFromArray($objects, [$_CONFIG["ecocup_soiree"]['buy'], $_CONFIG["ecocup_soiree"]['return']]);
+                        $objects = removeFromArray($objects, $ecocups_soirees_ids);
                         throw new PossException("Inutile, tu achètes autant d'écocup que tu en retournes");
                     } else if ($ecocup_soiree['return'] < 0) {
                         $ecocup_soiree['buy'] = abs($ecocup_soiree['return']);
-                        $objects = removeFromArray($objects, [$_CONFIG["ecocup_soiree"]['return']]);
+                        $objects = removeFromArray($objects, $_CONFIG["ecocup_soiree"]['return']);
                     } else { // pas d'achat d'écocup !
                         $ecocup_soiree['buy'] = 0;
-                        $objects = removeFromArray($objects, [$_CONFIG["ecocup_soiree"]['buy']]);
+                        $objects = removeFromArray($objects, $_CONFIG["ecocup_soiree"]['buy']);
                     }
                 }
                 if ($ecocup_soiree['buy'] > 0) { // return est vide !
                     if ($cur_ecocup_soiree > 0) {
                         $new_count_ecocup_soiree = $cur_ecocup_soiree - $ecocup_soiree['buy'];
                         if ($new_count_ecocup_soiree == 0) { // On achete pas d'écocup rien !
-                            $objects = removeFromArray($objects, [$_CONFIG["ecocup_soiree"]['buy']]);
+                            $objects = removeFromArray($objects, $_CONFIG["ecocup_soiree"]['buy']);
                             // On retire l'achat d'ecocup_soiree plein prix & on achette des ecocup_soiree à 100% de réduction
-                            $objects[] = array($_CONFIG["ecocup_soiree"]['buy'], $ecocup_soiree['buy'], 1);
+                            $objects[] = array($ecocup_soiree_buy_id, $ecocup_soiree['buy'], 1);
                             $buyer->updateCreditEcocup(0, "soiree");
                         } else if ($new_count_ecocup_soiree < 0) {
                             // On a vidé notre réserve écocup, et en plus on a racheté des écocup plein tarif
-                            $objects = removeFromArray($objects, [$_CONFIG["ecocup_soiree"]['buy']]);
-                            $objects[] = array($_CONFIG["ecocup_soiree"]['buy'], $ecocup_soiree['buy']+$new_count_ecocup_soiree, 1);
-                            $objects[] = array($_CONFIG["ecocup_soiree"]['buy'], abs($new_count_ecocup_soiree), null);
+                            $objects = removeFromArray($objects, $_CONFIG["ecocup_soiree"]['buy']);
+                            $objects[] = array($ecocup_soiree_buy_id, $ecocup_soiree['buy']+$new_count_ecocup_soiree, 1);
+                            $objects[] = array($ecocup_soiree_buy_id, abs($new_count_ecocup_soiree), null);
                             $ecocup_soiree['buy'] = abs($new_count_ecocup_soiree);
                             $buyer->updateCreditEcocup(0, "soiree");
                         } else { // On avait suffisament d'écocup en stock
-                            $objects = removeFromArray($objects, [$_CONFIG["ecocup_soiree"]['buy']]);
-                            $objects[] = array($_CONFIG["ecocup_soiree"]['buy'], $ecocup_soiree['buy'], 1);
+                            $objects = removeFromArray($objects, $_CONFIG["ecocup_soiree"]['buy']);
+                            $objects[] = array($ecocup_soiree_buy_id, $ecocup_soiree['buy'], 1);
                             $buyer->updateCreditEcocup($new_count_ecocup_soiree, "soiree");
                             $ecocup_soiree['buy'] = 0;
                         }
@@ -285,8 +294,8 @@ class POSS extends \ServiceBase {
             }
             if ($ecocup_soiree['return'] > 0) {
                 // On en retourne !
-                $objects = removeFromArray($objects, [$_CONFIG["ecocup_soiree"]['return']]);
-                $objects[] = array($_CONFIG["ecocup_soiree"]['return'], $ecocup_soiree['return'], null);
+                $objects = removeFromArray($objects, $_CONFIG["ecocup_soiree"]['return']);
+                $objects[] = array($ecocup_soiree_return_id, $ecocup_soiree['return'], null);
                 $buyer->updateCreditEcocup($ecocup_soiree['return'] + $cur_ecocup_soiree, "soiree");
             }
         }

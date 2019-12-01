@@ -101,9 +101,9 @@ $_CONFIG["ecocup"] = [
     'return' => 280,
 ];
 $_CONFIG["ecocup_soiree"] = [
-	'fun_id' => 2, // id fun bar icam
-	'buy' => 1395,
-	'return' => 1396,
+    'fun_id' => [1], // id fun bar icam
+    'buy' => [1395],
+    'return' => [1396],
 ];
 
 $_CONFIG["papercut_mysql"] = [
