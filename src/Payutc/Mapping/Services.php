@@ -14,6 +14,7 @@ class Services {
         'PAYLINE',
         'RELOAD',
         'RELOADPAPERCUT',
+        'RELOADEVENT',
         'MYACCOUNT',
         'CATALOG',
         'TRANSFER',
@@ -23,7 +24,7 @@ class Services {
         'TRESO',
         'NOTIFICATIONS'
     );
-    
+
     protected static $servicesGET = array(
         'PAYLINE' => array(
             'notification',
@@ -34,19 +35,19 @@ class Services {
         'SELFPOS' => array(
             'getStatus')
     );
-    
+
     public static function get($name) {
         static::checkExist($name);
         $name = "Payutc\\Service\\$name";
         return new $name();
     }
-    
+
     public static function checkExist($name) {
         if (!in_array($name, static::$services)) {
             throw new \Payutc\Exception\ServiceNotFound("Service $name does not exist");
         }
     }
-    
+
     public static function checkGetAuthorized($service, $method)
     {
         static::checkExist($service);
@@ -54,7 +55,7 @@ class Services {
             throw new \Payutc\Exception\ServiceMethodForbidden("Can't access $service::$method with GET");
         }
     }
-    
+
     public static function getServices() {
         return static::$services;
     }

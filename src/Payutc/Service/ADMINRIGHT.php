@@ -9,18 +9,18 @@ use \Application;
 
 /**
  * ADMINRIGHT.services.php
- * 
+ *
  * Ce service permet de gérer les droits.
  * Seul les utilisateurs ayant le droit ADMINRIGHT peuvent venir ici.
  *
  */
- 
+
  class ADMINRIGHT extends \ServiceBase {
-	 
+
     public function __construct() {
         parent::__construct();
     }
-    
+
     /**
      * Recuperer la liste des droits attribuables (les noms de service en fait)
      * Comme on ne veut pas forcément lister tout les services possibles et que l'ont veut leur donner un petit nom sympa et une description
@@ -32,14 +32,14 @@ use \Application;
      * clef "user" => doit on pouvoir donner ce droit à un user
      * clef "app" => doit on pouvoir donner ce droit à une app (en soit c'est toujours le cas, mais veut on le faire apparaitre par défaut dans les menus)
      *
-     * Pour les clefs user et app, ce n'est que pour l'ergonomie de l'interface utilisateur. 
+     * Pour les clefs user et app, ce n'est que pour l'ergonomie de l'interface utilisateur.
      * @return array $services
      */
     public function getServices() {
         return array(
                     array(
                         "service" => "ADMINRIGHT",
-                        "name"    => "Administrateur de fondation", 
+                        "name"    => "Administrateur de fondation",
                         "desc"    => "Permet la gestion des droits pour les utilisateurs de la fondations",
                         "user"    => true,
                         "app"     => false
@@ -110,6 +110,12 @@ use \Application;
                         "user"    => false,
                         "app"     => false
                     ), array(
+                        "service" => "RELOADEVENT",
+                        "name"    => "Recharger le solde Event",
+                        "desc"    => "Permet de recharger son solde Event avec le solde PayIcam (ou pas)",
+                        "user"    => false,
+                        "app"     => false
+                    ), array(
                         "service" => "CATALOG",
                         "name"    => "Consulter le catalogue d'une fondation depuis son application",
                         "desc"    => "Permet de consluter le catalogue des produits (bières, softs, snacks) avec une connexion d'application",
@@ -140,10 +146,10 @@ use \Application;
                         "user"    => true,
                         "app"     => true
                     )
-                    
+
                 );
     }
-     
+
 	/**
 	* Donner un droit liant un user à une fundation.
 	*
@@ -223,7 +229,7 @@ use \Application;
         // L'utilisateur à les droits de regarder ces droits :)
         return ApplicationRight::getRights($fun_id);
 	}
-	
+
 	/**
 	* Obtenir les applications déclarés (pour l'interface utilisateur des droits)
 	*

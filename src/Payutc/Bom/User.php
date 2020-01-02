@@ -192,6 +192,33 @@ class User {
     }
 
     /**
+    * Retourne $creditEvent.
+    * On fait une requête dans la BDD à chaque accès au crédit par sécurité.
+    *
+    * @return int $credit
+    */
+    public function getCreditEvent() {
+        Log::debug("User($this->idUser): getCreditEvent()");
+
+        $query = Dbal::createQueryBuilder()
+            ->select('usr_credit_event')
+            ->from('ts_user_usr', 'usr')
+            ->where('usr.usr_id = :usr_id')
+            ->setParameter('usr_id', $this->getId())
+            ->execute();
+
+        // Check that the user exists
+        if ($query->rowCount() != 1) {
+            Log::debug("User: User not found for id $this->idUser");
+            throw new UserNotFound();
+        }
+
+        // Get data from the database
+        $don = $query->fetch();
+        return $don['usr_credit_event'];
+    }
+
+    /**
     * Retourne $credit.
     * On fait une requête dans la BDD à chaque accès au crédit par sécurité.
     *
@@ -463,6 +490,16 @@ class User {
         }
     }
 
+    public function checkReloadEvent($amount) {
+        if ($amount < 1000) {
+            throw new CannotReload("Il faut recharger au minimum 10 euros par rechargement du solde event");
+        } elseif ($amount > 10000) {
+            throw new CannotReload("Impossible de recharger plus que 100 euros sur le solde event d'un coup");
+        } elseif($this->getCreditEvent() + $amount > 25000) {
+            throw new CannotReload("Impossible de recharger plus que 250 euros en tout sur le solde event");
+        }
+    }
+
     /**
      * VIREMENT
      *
@@ -568,16 +605,28 @@ class User {
         $qb->execute();
     }
 
+    public function incCreditEvent($val, $type="classique") {
+        static::incCreditEventById($this->getId(), $val, $type);
+    }
+    public static function incCreditEventById($usr_id, $val) {
+        $qb = static::_baseUpdateQueryById($usr_id);
+        $qb->set('usr_credit_event', 'usr_credit_event + :val')
+            ->setParameter('val', $val);
+        $qb->execute();
+    }
+
     public static function decCreditById($usr_id, $val) {
         $qb = static::_baseUpdateQueryById($usr_id);
         $qb->set('usr_credit', 'usr_credit - :val')
             ->setParameter('val', $val);
         $qb->execute();
     }
+
     public function updateCreditEcocup($val, $type="classique") {
         static::updateCreditEcocupById($val, $this->getId(), $type);
     }
     public static function updateCreditEcocupById($val, $usrId, $type="classique") {
+
         $qb = Dbal::createQueryBuilder();
         $qb->update('ts_user_usr', 'usr')
             ->where('usr_id = :usr_id')

@@ -1,0 +1,285 @@
+<?php
+
+/**
+ *
+ * Gestion des articles
+ * Table: t_object_obj | obj_type = 'product'
+ */
+
+namespace Payutc\Bom;
+use \Payutc\Db\Dbal;
+use \Payutc\Db\DbBuckutt;
+
+class ReloadEvent {
+
+    public static function reload($amount, $buyer_id, $seller_id, $app_id, $reload_type) {
+        Dbal::conn()->insert('t_recharge_rec', [
+                "rec_type" => $reload_type, // Type de rechargement => Rechargement en ligne
+                "usr_id_buyer" => $buyer_id,
+                "usr_id_operator" => $seller_id,
+                "poi_id" => $app_id, // Historique... useless maintenant TODO mettre l'id d'app
+                "rec_date" =>  new \DateTime(),
+                "rec_credit" => $amount,
+                "rec_trace" => null,
+                "rec_removed" => 0,
+                "is_event" => 1,
+            ], [
+                "string", "integer", "integer", "integer", "datetime", "integer", "string", "integer", "integer",
+            ]
+        );
+    }
+
+    /**
+    * Ajoute un article
+    *
+    * @param string $nom
+    * @param int $stock
+    * @param int $parent
+    * @param int $prix
+    * @param int $image
+    * @param int $fun_id
+    * @param $tva
+    * @param $cotisant
+    * @return array $categorie
+    */
+    public static function add($nom, $service, $parent, $prix, $stock, $alcool, $image, $fun_id, $tva, $cotisant) {
+        $conn = Dbal::conn();
+        $db = DbBuckutt::getInstance();
+        // 1. Verification que le parent existe (et qu'il est bien dans la fundation indiqué (vu qu'on a vérifié les droits grâce à ça)
+        $res = $db->query("SELECT fun_id FROM t_object_obj LEFT JOIN tj_object_link_oli ON obj_id = obj_id_child WHERE obj_removed = '0' AND obj_type = 'category' AND obj_id = '%u' AND fun_id = '%u' LIMIT 0,1;", array($parent, $fun_id));
+        if ($db->affectedRows() >= 1) {
+            $don = $db->fetchArray($res);
+
+            // 2. AJOUT DE L'ARTICLE
+            $image = intval($image);
+            if(empty($image)){
+                $image = "NULL";
+            }
+
+            $article_id = $db->insertId(
+              $db->query(
+                  "INSERT INTO t_object_obj (`obj_id`, `obj_name`, `obj_type`, `obj_service`, `obj_stock`, `obj_single`, `img_id`, `fun_id`, `obj_removed`, `obj_alcool`, `obj_cotisant`)
+                  VALUES (NULL, '%s', 'product', '%s', '%d', '0',  %s, '%u', '0', '%u', '%u');",
+                  array($nom, $service, $stock, $image, $fun_id, $alcool, $cotisant)));
+
+            // 3. CREATION DU LIEN SUR LE PARENT
+            $db->query(
+                  "INSERT INTO tj_object_link_oli (`oli_id`, `obj_id_parent`, `obj_id_child`, `oli_step`, `oli_removed`) VALUES (NULL, '%u', '%u', '0', '0');",
+                  array($parent, $article_id));
+
+            // 4. AJOUT DU PRIX
+            $conn->insert('t_price_pri', array(
+                'obj_id' => $article_id,
+                'pri_credit' => $prix,
+                'pri_tva' => $tva,
+                'pri_removed' => 0,
+            ));
+
+            // ON RETOURNE L'ID D'ARTICLE
+            return array("success"=>$article_id);
+
+        } else {
+            // LE PARENT N'EXISTE PAS
+            return array("error"=>"Le parent demandé ($parent, $fun_id) n'existe pas. (Ou tu n'as pas les droits nécessaires)");
+        }
+    }
+
+    /**
+    * Edite un article
+    *
+    * @param int $id
+    * @param string $nom
+    * @param int $parent
+    * @param int $prix
+    * @param int $stock
+    * @param int $image 0 pour conserver la valeur actuelle, -1 pour la supprimer, id dans la table image sinon
+    * @param int $fun_id
+    * @param int $tva
+    * @param int $cotisant
+    * @return array $categorie
+    */
+    public static function edit($id, $nom, $service, $parent, $prix, $stock, $alcool, $image, $fun_id, $tva, $cotisant) {
+        $qb = Dbal::createQueryBuilder();
+        $db = DbBuckutt::getInstance();
+        // 1. GET THE ARTICLE
+        $res = $db->query("SELECT o.obj_id, o.obj_name, obj_id_parent, o.fun_id, p.pri_credit, p.pri_tva, o.img_id, oli_id
+        FROM t_object_obj o
+        LEFT JOIN tj_object_link_oli ON o.obj_id = obj_id_child
+        LEFT JOIN t_price_pri p ON p.obj_id = o.obj_id  WHERE o.obj_removed = '0' AND o.obj_type = 'product' AND o.obj_id = '%u' AND o.fun_id = '%u';", array($id, $fun_id));
+        if ($db->affectedRows() >= 1) {
+            $don = $db->fetchArray($res);
+            $fundation=$don['fun_id'];
+            $old_parent=$don['obj_id_parent'];
+            $old_price=$don['pri_credit'];
+            $old_tva=$don['pri_tva'];
+            $old_img_id=$don['img_id'];
+            $oli_id=$don['oli_id'];
+        } else {
+            return array("error"=>400, "error_msg"=>"L'article à modifier n'existe pas ! (Ou vous n'en avez pas les droits)");
+        }
+
+        // 2. Remove old image si necessaire
+        $image = intval($image);
+        if($image != 0 and $old_img_id != null and $old_img_id != $image) {
+            \Image::remove($old_img_id);
+        }
+
+        // 3. CHECK SI LE CHANGEMENT DE PARENT EST REALISABLE
+        if($old_parent != $parent)
+        {
+            $res = $db->query("SELECT fun_id FROM t_object_obj WHERE obj_removed = '0' AND obj_type = 'category' AND obj_id = '%u';", array($parent));
+            if ($db->affectedRows() >= 1) {
+                $don = $db->fetchArray($res);
+                $new_fundation=$don['fun_id'];
+            } else {
+                return array("error"=>400, "error_msg"=>"Le nouveau parent n'a pas été trouvé !");
+            }
+            if($new_fundation != $fundation) {
+                return array("error"=>400, "error_msg"=>"Impossible de mettre un article dans une autre fundation...");
+            }
+        }
+
+        // 4. EDIT THE PARENT IF NECESSARY
+        if($old_parent != $parent)
+        {
+            if($old_parent != null and $parent != null) {
+                $db->query("UPDATE tj_object_link_oli SET  `obj_id_parent` =  '%u' WHERE  `oli_id` = '%u';",array($parent, $oli_id));
+            } else if($old_parent == null and $parent != null) {
+                $db->query(
+                  "INSERT INTO tj_object_link_oli (`oli_id`, `obj_id_parent`, `obj_id_child`, `oli_step`, `oli_removed`) VALUES (NULL, '%u', '%u', '0', '0');",
+                  array($parent, $id));
+            } else {
+                $db->query("UPDATE tj_object_link_oli SET  `oli_removed` =  '1' WHERE  `oli_id` = '%u';",array($oli_id));
+            }
+        }
+
+        // 5. EDIT THE PRICE IF NECESSARY
+        if($old_price != $prix || $old_tva != $tva)
+        {
+            $qb->update('t_price_pri', 'pri')
+                ->set('pri.pri_credit', ':pri_credit')
+                ->set('pri.pri_tva', ':pri_tva')
+                ->where('pri.obj_id = :obj_id')
+                ->andWhere('pri.pri_removed = :pri_removed');
+
+            $qb->setParameters(array(
+                "pri_credit" => $prix,
+                "pri_tva" => $tva,
+                "obj_id" => $id,
+                "pri_removed" => 0));
+
+            $qb->execute();
+        }
+
+        // 6. EDIT THE ARTICLE NAME AND STOCK AND cotisant
+        if($image == 0) {
+          $image = "`img_id`";
+        } else if ($image == -1) {
+          $image = "NULL";
+        }
+        $db->query("UPDATE t_object_obj SET  `obj_name` =  '%s', `obj_service` = '%s', `obj_stock` = '%d', `obj_alcool` = '%u', `img_id` = %s, `obj_cotisant` = '%u' WHERE `obj_id` = '%u';",array($nom, $service, $stock, $alcool, $image, $cotisant, $id));
+
+        return array("success"=>$id);
+    }
+
+    /**
+    * Supprime un article
+    *
+    * @param int $id
+    * @return array $result
+    */
+    public static function delete($id, $fun_id) {
+        $db = DbBuckutt::getInstance();
+        // 1. GET THE ARTICLE
+        $res = $db->query("
+        SELECT
+            o.obj_id, o.obj_name, obj_id_parent, o.fun_id, o.img_id,
+            p.pri_credit
+        FROM t_object_obj o
+            LEFT JOIN tj_object_link_oli ON o.obj_id = obj_id_child
+            LEFT JOIN t_price_pri p ON p.obj_id = o.obj_id
+        WHERE
+            o.obj_removed = '0' AND
+            o.obj_type = 'product' AND
+            o.obj_id = '%u' AND
+            o.fun_id = '%u';", array($id, $fun_id));
+        if ($db->affectedRows() >= 1) {
+            $don = $db->fetchArray($res);
+        } else {
+            return array("error"=>400, "error_msg"=>"L'article à supprimer n'existe pas ! (Ou vous n' avez pas les droits pour le supprimer).");
+        }
+
+        // start transaction
+        $conn = Dbal::conn();
+        $conn->beginTransaction();
+
+        try {
+            // 2. remove article
+            $db->query("UPDATE t_object_obj SET  `obj_removed` = '1' WHERE  `obj_id` = '%u';",array($id));
+
+            // 3. remove prices
+            $qb = Dbal::createQueryBuilder();
+            $qb->update('t_price_pri', 'pri')
+                ->where('obj_id = :id')
+                ->set('pri_removed', 1)
+                ->setParameter('id', $id);
+            $qb->execute();
+
+            // 4. delete image
+            $conn->delete('ts_image_img', array('img_id' => $don['img_id']));
+
+            // commit
+            $conn->commit();
+        }
+        catch (Exception $e) {
+            $conn->rollback();
+            return array("error"=>400, "error_msg"=>"Erreur lors de la suppression de l'objet $id.");
+        }
+
+
+        return array("success"=>"ok");
+    }
+
+    public static function setPrice($articles) {
+        foreach(json_decode($articles) as $id => $price) {
+            $qb = Dbal::createQueryBuilder();
+            $qb->update('t_price_pri', 'pri_credit')
+            ->set('pri_credit', ':pri_credit')
+            ->where('obj_id = :obj_id')
+            ->setParameters(array(
+                'obj_id' => $id,
+                'pri_credit' => $price
+            ))
+            ->execute();
+            file_put_contents('debugAntoine7.ptxt', $price);
+        }
+    }
+
+
+    protected static function _baseUpdateQueryById($itm_id)
+    {
+        $qb = Dbal::createQueryBuilder();
+        $qb->update('t_object_obj', 'itm')
+            ->where('obj_id = :itm_id')
+            ->setParameter('itm_id', $itm_id);
+        return $qb;
+    }
+
+    public static function incStockById($itm_id, $val)
+    {
+        $qb = static::_baseUpdateQueryById($itm_id);
+        $qb->set('obj_stock', 'obj_stock + :val')
+            ->setParameter('val', $val);
+        $qb->execute();
+    }
+
+    public static function decStockById($itm_id, $val)
+    {
+        $qb = static::_baseUpdateQueryById($itm_id);
+        $qb->set('obj_stock', 'obj_stock - :val')
+            ->setParameter('val', $val);
+        $qb->execute();
+    }
+
+}
+
