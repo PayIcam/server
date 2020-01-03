@@ -81,8 +81,12 @@ class MYACCOUNT extends \ServiceBase {
 
         return array(
             "historique" => $this->user()->getHistorique(),
+            "historique_event" => $this->user()->getEventHistorique(),
             "credit" => $this->user()->getCredit(),
-            "credit_ecocup" => $this->user()->getCreditEcocup());
+            "credit_event" => $this->user()->getCreditEvent(),
+            "credit_ecocup" => $this->user()->getCreditEcocup(),
+            "credit_ecocup_soiree" => $this->user()->getCreditEcocup("soiree"),
+        );
 	}
 
     /**
