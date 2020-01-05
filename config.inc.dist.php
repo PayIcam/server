@@ -88,6 +88,10 @@ $_CONFIG["papercut"] = [
 	'fun_id' => xx, // id fondation papercut
 	'obj_id' => xx, // id objet transfert argent avec un prix de 0.1 cts
 ];
+$_CONFIG["reload_event"] = [
+    'fun_id' => 5, // id fondation papercut
+    'obj_id' => 'xxx',
+];
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Ecocup                                                                                        //
 // Ne pas oublier de créer les objets:                                                           //

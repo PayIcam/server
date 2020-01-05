@@ -18,7 +18,7 @@ class ReloadEvent {
                 "usr_id_buyer" => $buyer_id,
                 "usr_id_operator" => $seller_id,
                 "poi_id" => $app_id, // Historique... useless maintenant TODO mettre l'id d'app
-                "rec_date" =>  new \DateTime(),
+                "rec_date" => new \DateTime(),
                 "rec_credit" => $amount,
                 "rec_trace" => null,
                 "rec_removed" => 0,
@@ -28,6 +28,23 @@ class ReloadEvent {
             ]
         );
     }
+
+    public static function reloadPayIcam($amount, $user_id, $tra_id, $app_id) {
+        Dbal::conn()->insert('t_recharge_rec', [
+                "rec_type" => 'PayIcam', // Type de rechargement => Rechargement en ligne
+                "usr_id_buyer" => $user_id,
+                "usr_id_operator" => $user_id,
+                "poi_id" => $app_id,
+                "rec_trace" => $tra_id,
+                "rec_date" => new \DateTime(),
+                "rec_credit" => $amount,
+                "rec_trace" => null,
+                "rec_removed" => 0,
+                "is_event" => 1,
+            ], [
+                "string", "integer", "integer", "integer", "integer", "datetime", "integer", "string", "integer", "integer",
+            ]
+        );    }
 
     /**
     * Ajoute un article
