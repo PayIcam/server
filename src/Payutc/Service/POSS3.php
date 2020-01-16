@@ -30,6 +30,19 @@ class POSS3 extends POSS {
         return parent::getBuyerInfo($buyer, $fun_id);
     }
 
+    public function getLastPurchases($badge_id, $fun_id=null)
+    {
+        // Verifier que le buyer existe
+        try {
+            $buyer = User::getUserFromBadge($badge_id);
+        }
+        catch(UserNotFound $ex) {
+            Log::warn("getBuyerInfo($badge_id) : User not found");
+            throw new PossException("Ce badge n'a pas été reconnu");
+        }
+        return parent::getBuyerInfo($buyer, $fun_id);
+    }
+
     /**
      * Transaction complète,
      *         1. load le buyer

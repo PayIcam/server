@@ -49,6 +49,22 @@ class POSS extends \ServiceBase {
         );
     }
 
+    public function getLastPurchases($buyer, $fun_id=null)
+    {
+        $this->checkRight($this->shouldICheckUser(), true);
+
+        // Vérifier que la carte n'est pas bloquée
+        try {
+            $buyer->checkNotBlockedMe();
+        }
+        catch(UserIsBlockedException $ex) {
+            Log::warn("getBuyerInfo(".$buyer->getId().") : Blocked card");
+            throw new PossException("Ce badge à été bloqué : son propriétaire doit le débloquer sur son interface de gestion");
+        }
+
+        return $buyer->getLastPurchases($fun_id);
+    }
+
     public function getArticles($fun_id) {
         $this->checkRight($this->shouldICheckUser(), true, true, $fun_id);
         return Product::getAll(array('fun_ids'=>array($fun_id), 'service' => 'Mozart'));
