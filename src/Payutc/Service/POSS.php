@@ -42,7 +42,7 @@ class POSS extends \ServiceBase {
             "firstname"=>$buyer->getFirstname(),
             "lastname"=>$buyer->getLastname(),
             "solde"=>$buyer->getCredit(),
-            "solde_event"=>$buyer->getCreditEcocup(),
+            "solde_event"=>$buyer->getCreditEvent(),
             "credit_ecocup"=>$buyer->getCreditEcocup(),
             "credit_ecocup_soiree"=>$buyer->getCreditEcocup("soiree"),
             "last_purchases"=>$buyer->getLastPurchases($fun_id),
