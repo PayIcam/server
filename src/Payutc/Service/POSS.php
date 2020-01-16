@@ -42,6 +42,7 @@ class POSS extends \ServiceBase {
             "firstname"=>$buyer->getFirstname(),
             "lastname"=>$buyer->getLastname(),
             "solde"=>$buyer->getCredit(),
+            "solde_event"=>$buyer->getCreditEcocup(),
             "credit_ecocup"=>$buyer->getCreditEcocup(),
             "credit_ecocup_soiree"=>$buyer->getCreditEcocup("soiree"),
             "last_purchases"=>$buyer->getLastPurchases($fun_id),
@@ -165,7 +166,7 @@ class POSS extends \ServiceBase {
                     $ecocup['buy'] += $obj[1];
                 else if ($obj[0] == $_CONFIG["ecocup"]['return'])
                     $ecocup['return'] += $obj[1];
-            } 
+            }
 
             if (in_array($fun_id, $_CONFIG["ecocup_soiree"]['fun_id'])) {
                 if (in_array($obj[0], $_CONFIG["ecocup_soiree"]['buy'])) {
