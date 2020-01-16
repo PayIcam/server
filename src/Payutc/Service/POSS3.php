@@ -40,7 +40,7 @@ class POSS3 extends POSS {
             Log::warn("getBuyerInfo($badge_id) : User not found");
             throw new PossException("Ce badge n'a pas été reconnu");
         }
-        return parent::getBuyerInfo($buyer, $fun_id);
+        return parent::getLastPurchases($buyer, $fun_id);
     }
 
     /**
