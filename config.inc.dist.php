@@ -126,3 +126,5 @@ $_CONFIG["PHPMailer"] = array(
         "Port" => 465,
         "integrity_mail" => ""
     )
+
+$_CONFIG['event_on'] = false;

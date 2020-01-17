@@ -662,6 +662,13 @@ class User {
         $qb->execute();
     }
 
+    public static function decEventCreditById($usr_id, $val) {
+        $qb = static::_baseUpdateQueryById($usr_id);
+        $qb->set('usr_credit_event', 'usr_credit_event - :val')
+            ->setParameter('val', $val);
+        $qb->execute();
+    }
+
     public function updateCreditEcocup($val, $type="classique") {
         static::updateCreditEcocupById($val, $this->getId(), $type);
     }

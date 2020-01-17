@@ -320,7 +320,7 @@ class POSS extends \ServiceBase {
         // Création de la transaction, validée immédiatement
         $tr = Transaction::createAndValidate($buyer, $this->user(),
                                              $this->application()->getId(),
-                                             $fun_id, $objects);
+                                             $fun_id, $objects, $_CONFIG['event_on']);
 
         // Retourner les infos sur l'utilisateur
         $msg = $buyer->getMsgPerso($fun_id);

@@ -219,7 +219,11 @@ class Transaction {
                     throw new NotEnoughMoney("L'utilisateur n'a pas assez d'argent sur son compte.");
                 }
 
-                User::decCreditById($this->buyerId, $this->getMontantTotal());
+                if($event === false) {
+                    User::decEventCreditById($this->buyerId, $this->getMontantTotal());
+                } else {
+                    User::decCreditById($this->buyerId, $this->getMontantTotal());
+                }
             }
             
             $conn->commit();
@@ -325,8 +329,8 @@ class Transaction {
         
         return $transaction;
     }
-    
-    static public function create($buyer, $seller, $appId, $funId, $objects, $callbackUrl = null, $returnUrl = null){
+
+    static public function create($buyer, $seller, $appId, $funId, $objects, $callbackUrl = null, $returnUrl = null, $event=false){
         $conn = Dbal::conn();
         
         // Create a list of all the IDs we want to buy
@@ -367,8 +371,7 @@ class Transaction {
 
             date_default_timezone_set('Europe/Paris');
 
-            // Insert the transaction
-            $conn->insert('t_transaction_tra', array(
+            $insert_transaction = [
                 'tra_date' => new \DateTime(),
                 'usr_id_buyer' => $buyerId,
                 'usr_id_seller' => $sellerId,
@@ -376,9 +379,19 @@ class Transaction {
                 'fun_id' => $funId,
                 'tra_status' => 'W',
                 'tra_callback_url' => $callbackUrl,
-                'tra_return_url' => $returnUrl
-            ), array("datetime", "integer", "integer", "integer", "integer", "string", "string", "string", "string"));
-            
+                'tra_return_url' => $returnUrl,
+            ];
+            $parameters = [
+                "datetime", "integer", "integer", "integer", "integer", "string", "string", "string", "string"
+            ];
+            if ($event === true) {
+                $insert_transaction['is_event'] = 1;
+                $parameters[] = 'integer';
+            }
+
+            // Insert the transaction
+            $conn->insert('t_transaction_tra', $insert_transaction, $parameters);
+
             $transactionId = $conn->lastInsertId();
 
             // Go through all the products we are buying
@@ -449,18 +462,18 @@ class Transaction {
         
         return self::getById($transactionId);
     }
-    
-    static public function createAndValidate($buyer, $seller, $appId, $funId, $items, $callbackUrl = null, $returnUrl = null){
+
+    static public function createAndValidate($buyer, $seller, $appId, $funId, $items, $callbackUrl = null, $returnUrl = null, $event=false){
         $conn = Dbal::conn();
         
         try {
             // This is the only real transaction, all other nested transactions are virtual
             // See http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/transactions.html
             $conn->beginTransaction();
-            
-            $transaction = self::create($buyer, $seller, $appId, $funId, $items, $callbackUrl, $returnUrl);
-            $transaction->validate();
-            
+
+            $transaction = self::create($buyer, $seller, $appId, $funId, $items, $callbackUrl, $returnUrl, $event);
+            $transaction->validate($event);
+
             $conn->commit();
         }
         catch (\Exception $e){
