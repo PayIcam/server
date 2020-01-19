@@ -193,6 +193,7 @@ class Purchase
             ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
             ->andWhere("tra.tra_status = 'V'")
             ->andWhere('pur.pur_removed = 0');
+            ->andWhere('tra.is_event = 0');
 
         if($fun_id != null) {
             $qb->andWhere('tra.fun_id = :fun_id')->setParameter('fun_id', $fun_id);
@@ -242,31 +243,50 @@ class Purchase
      */
     public static function getDetails($fun_id, $start=null, $end=null)
     {
-        $qb = Dbal::createQueryBuilder();
-        $qb->select('sum(pur.pur_price) as total', 'sum(pur.pur_qte) as qte', 'pur.pur_unit_price', 'pur.pur_tva', 'obj.obj_name')
+        $regular_transactions = Dbal::createQueryBuilder();
+        $regular_transactions->select('sum(pur.pur_price) as total', 'sum(pur.pur_qte) as qte', 'pur.pur_unit_price', 'pur.pur_tva', 'obj.obj_name')
             ->from('t_purchase_pur', 'pur')
             ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
             ->innerJoin('pur', 't_object_obj', 'obj', 'pur.obj_id = obj.obj_id')
             ->andWhere("tra.tra_status = 'V'")
             ->andWhere('pur.pur_removed = 0')
             ->andWhere('tra.fun_id = :fun_id')
+            ->andWhere('tra.is_event = 0')
             ->setParameter('fun_id', $fun_id)
             ->groupBy("pur.obj_id", "pur.pur_unit_price", "pur.pur_tva");
 
         if($start != null) {
-            $qb->andWhere('tra.tra_date >= :start')
+            $regular_transactions->andWhere('tra.tra_date >= :start')
                 ->setParameter('start', $start);
         }
-
         if($end != null) {
-            $qb->andWhere('tra.tra_date <= :end')
+            $regular_transactions->andWhere('tra.tra_date <= :end')
                 ->setParameter('end', $end);
         }
+        $regular_transactions = $regular_transactions->execute();
 
-        $result = array();
-        $a = $qb->execute();
-        while($r = $a->fetch()) { $result[] = $r; }
-        return $result;
+        $event_transactions->select('sum(pur.pur_price) as total', 'sum(pur.pur_qte) as qte', 'pur.pur_unit_price', 'pur.pur_tva', 'obj.obj_name')
+            ->from('t_purchase_pur', 'pur')
+            ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
+            ->innerJoin('pur', 't_object_obj', 'obj', 'pur.obj_id = obj.obj_id')
+            ->andWhere("tra.tra_status = 'V'")
+            ->andWhere('pur.pur_removed = 0')
+            ->andWhere('tra.fun_id = :fun_id')
+            ->andWhere('tra.is_event = 1')
+            ->setParameter('fun_id', $fun_id)
+            ->groupBy("pur.obj_id", "pur.pur_unit_price", "pur.pur_tva");
+
+        if($start != null) {
+            $event_transactions->andWhere('tra.tra_date >= :start')
+                ->setParameter('start', $start);
+        }
+        if($end != null) {
+            $event_transactions->andWhere('tra.tra_date <= :end')
+                ->setParameter('end', $end);
+        }
+        $event_transactions = $event_transactions->execute();
+
+        return ['payicam' => $regular_transactions->fetchAll(), 'event' => $event_transactions->fetchAll()];
     }
 
     public static function getPurchaseById($pur_id)
