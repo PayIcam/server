@@ -855,6 +855,26 @@ class User {
         $don = $query->fetch();
         return $don['usr_credit'];
     }
+    public static function getCreditEventById($id){
+        Log::debug("User::getCreditEventById($id)");
+
+        $query = Dbal::createQueryBuilder()
+            ->select('usr_credit_event')
+            ->from('ts_user_usr', 'usr')
+            ->where('usr.usr_id = :usr_id')
+            ->setParameter('usr_id', $id)
+            ->execute();
+
+        // Check that the user exists
+        if ($query->rowCount() != 1) {
+            Log::debug("User: User not found for id $id");
+            throw new UserNotFound();
+        }
+
+        // Get data from the database
+        $don = $query->fetch();
+        return $don['usr_credit_event'];
+    }
 
     public static function getSumCredit() {
         $qb = Dbal::createQueryBuilder()

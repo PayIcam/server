@@ -214,14 +214,16 @@ class Transaction {
             if($this->buyerId != null){
                 $total = $this->getMontantTotal();
                 $buyer = User::getById($this->buyerId);
-                
-                if($total > User::getCreditById($this->buyerId)){
-                    throw new NotEnoughMoney("L'utilisateur n'a pas assez d'argent sur son compte.");
-                }
 
                 if($event === true) {
+                    if($total > User::getCreditEventById($this->buyerId)){
+                        throw new NotEnoughMoney("L'utilisateur n'a pas assez d'argent sur son compte.");
+                    }
                     User::decEventCreditById($this->buyerId, $this->getMontantTotal());
                 } else {
+                    if($total > User::getCreditById($this->buyerId)){
+                        throw new NotEnoughMoney("L'utilisateur n'a pas assez d'argent sur son compte.");
+                    }
                     User::decCreditById($this->buyerId, $this->getMontantTotal());
                 }
             }
