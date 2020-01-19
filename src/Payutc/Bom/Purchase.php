@@ -296,7 +296,11 @@ class Purchase
         try {
             // update purchase + buyer + stock, then commit
             $qb->execute();
-            User::incCreditById($pur['usr_id_buyer'], $pur['pur_price']);
+            if ($pur['is_event']) {
+                User::incCreditEventById($pur['usr_id_buyer'], $pur['pur_price']);
+            } else {
+                User::incCreditById($pur['usr_id_buyer'], $pur['pur_price']);
+            }
             Product::incStockById($pur['obj_id'], $pur['pur_qte']);
             Dbal::commit();
         }
