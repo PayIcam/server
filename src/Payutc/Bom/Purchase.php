@@ -110,7 +110,7 @@ class Purchase
                ->andWhere('tra.tra_status ="V"')
                ->andWhere('obj.fun_id=:fun_id')
                ->andWhere('obj.obj_service ="Mozart"')
-               ->andWhere('obj.obj_name NOT IN ("Eco cup", "Retour eco cup"')
+               ->andWhere('obj.obj_name NOT IN ("Eco cup", "Retour eco cup")')
                ->andWhere('obj.obj_id IN (:obj_ids)');
             if($start != null) {
                 $qb->andWhere('tra.tra_date > :start');
