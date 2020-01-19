@@ -177,7 +177,7 @@ class Transaction {
         $this->doCallback();
     }
 
-    public function validate(){
+    public function validate($event=false){
         if($this->status == 'V'){
             throw new TransactionAlreadyValidated();
         }
