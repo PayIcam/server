@@ -219,7 +219,7 @@ class Transaction {
                     throw new NotEnoughMoney("L'utilisateur n'a pas assez d'argent sur son compte.");
                 }
 
-                if($event === false) {
+                if($event === true) {
                     User::decEventCreditById($this->buyerId, $this->getMontantTotal());
                 } else {
                     User::decCreditById($this->buyerId, $this->getMontantTotal());
