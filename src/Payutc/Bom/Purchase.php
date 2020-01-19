@@ -192,7 +192,7 @@ class Purchase
             ->from('t_purchase_pur', 'pur')
             ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
             ->andWhere("tra.tra_status = 'V'")
-            ->andWhere('pur.pur_removed = 0');
+            ->andWhere('pur.pur_removed = 0')
             ->andWhere('tra.is_event = 0');
 
         if($fun_id != null) {
@@ -265,6 +265,7 @@ class Purchase
         }
         $regular_transactions = $regular_transactions->execute();
 
+        $event_transactions = Dbal::createQueryBuilder();
         $event_transactions->select('sum(pur.pur_price) as total', 'sum(pur.pur_qte) as qte', 'pur.pur_unit_price', 'pur.pur_tva', 'obj.obj_name')
             ->from('t_purchase_pur', 'pur')
             ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
