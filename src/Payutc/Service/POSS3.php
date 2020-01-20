@@ -18,7 +18,7 @@ class POSS3 extends POSS {
      * @param String $badge_id
      * @return array $state
      */
-    public function getBuyerInfo($badge_id, $fun_id=null, $mozart=false) {
+    public function getBuyerInfo($badge_id, $fun_id=null, $mozart=true) {
         // Verifier que le buyer existe
         try {
             $buyer = User::getUserFromBadge($badge_id);
