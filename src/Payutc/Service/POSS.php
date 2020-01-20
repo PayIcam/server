@@ -26,7 +26,7 @@ class POSS extends \ServiceBase {
      * @param String $badge_id
      * @return array $state
      */
-    public function getBuyerInfo($buyer, $fun_id=null) {
+    public function getBuyerInfo($buyer, $fun_id=null, $mozart=true) {
         $this->checkRight($this->shouldICheckUser(), true);
 
         // Vérifier que la carte n'est pas bloquée
@@ -38,15 +38,15 @@ class POSS extends \ServiceBase {
             throw new PossException("Ce badge à été bloqué : son propriétaire doit le débloquer sur son interface de gestion");
         }
 
-        return array(
+        return [
             "firstname"=>$buyer->getFirstname(),
             "lastname"=>$buyer->getLastname(),
             "solde"=>$buyer->getCredit(),
             "solde_event"=>$buyer->getCreditEvent(),
             "credit_ecocup"=>$buyer->getCreditEcocup(),
             "credit_ecocup_soiree"=>$buyer->getCreditEcocup("soiree"),
-            "last_purchases"=>$buyer->getLastPurchases($fun_id),
-        );
+            "last_purchases" => $mozart === true ? $buyer->getLastPurchases($fun_id) : !empty($buyer->getLastPurchases($fun_id)),
+        ];
     }
 
     public function getLastPurchases($buyer, $fun_id=null)
