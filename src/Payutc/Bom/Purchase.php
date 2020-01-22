@@ -438,9 +438,10 @@ class Purchase
     public static function getPurchasesForUser($usr_id, $time_limit=null, $fun_id=null)
     {
         $qb = Dbal::createQueryBuilder();
-        $qb->select('pur_id', 'obj_id', 'pur_price', 'pur_qte', 'tra_date AS pur_date')
+        $qb->select('pur_id', 'pur.obj_id', 'obj_name', 'pur_price', 'pur_qte', 'tra_date AS pur_date')
            ->from('t_purchase_pur', 'pur')
            ->innerJoin('pur', 't_transaction_tra', 'tra', 'pur.tra_id = tra.tra_id')
+           ->innerJoin('pur', 't_object_obj', 'obj', 'pur.obj_id = obj.obj_id')
            ->Where('usr_id_buyer = :usr_id')
            ->andWhere("tra.tra_status = 'V'")
            ->andWhere('pur_removed = 0')
