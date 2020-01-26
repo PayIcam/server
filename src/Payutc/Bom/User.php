@@ -354,12 +354,15 @@ class User {
                 "PURCHASE" AS type,
                 obj.obj_name AS name,
                 fun.fun_name AS fun,
+                cat.obj_name as category_name,
                 NULL AS firstname,
                 NULL AS lastname
             FROM
                 t_purchase_pur pur
             INNER JOIN t_transaction_tra tra ON pur.tra_id = tra.tra_id
             INNER JOIN t_object_obj obj ON pur.obj_id = obj.obj_id
+            INNER JOIN tj_object_link_oli oli ON obj.obj_id = oli.obj_id_child
+            INNER JOIN t_object_obj cat ON cat.obj_id = oli.obj_id_parent
             INNER JOIN t_fundation_fun fun ON tra.fun_id = fun.fun_id
             WHERE
                 tra.usr_id_buyer = ? AND tra.tra_status = "V" AND pur.pur_removed = 0 AND is_event=1
@@ -371,6 +374,7 @@ class User {
                 "RECHARGE" AS type,
                 NULL AS name,
                 NULL AS fun,
+                NULL as category_name,
                 NULL AS firstname,
                 NULL AS lastname
             FROM
